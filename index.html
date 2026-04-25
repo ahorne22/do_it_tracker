@@ -5,947 +5,254 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="DoIt" />
-  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="apple-mobile-web-app-title" content="Weekly tasks" />
+  <meta name="theme-color" content="#fafaf7" />
   <link rel="manifest" href="manifest.json" />
-  <title>DoIt</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <title>Weekly tasks</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --border: #2a2a2a;
-      --accent: #c8f53a;
-      --text: #f0f0f0;
-      --muted: #666;
-      --danger: #ff4d4d;
-      --radius: 16px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f3f3ef;
+      --color-text-primary: #1a1a1a;
+      --color-text-secondary: #6b6b66;
+      --color-text-tertiary: #9a9a93;
+      --color-border-secondary: #d8d8d2;
+      --color-border-tertiary: #ececea;
     }
 
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary: #1a1a1a;
+        --color-background-secondary: #242422;
+        --color-text-primary: #f0f0ec;
+        --color-text-secondary: #a3a39c;
+        --color-text-tertiary: #6b6b66;
+        --color-border-secondary: #3a3a37;
+        --color-border-tertiary: #2a2a28;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
+      background: var(--color-background-secondary);
+      color: var(--color-text-primary);
+      font-family: var(--font-sans);
       min-height: 100vh;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 0 0 120px;
-      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-
-    header {
-      padding: 52px 24px 16px;
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 20;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 16px;
-    }
-
-    .logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 2.4rem;
-      font-weight: 800;
-      letter-spacing: -2px;
-      line-height: 1;
-    }
-    .logo span { color: var(--accent); }
-
-    .date-badge {
-      font-size: 0.65rem;
-      color: var(--muted);
-      text-align: right;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-top: 6px;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      text-align: center;
-    }
-
-    .stat-num {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 0.6rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-top: 2px;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 480px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      display: flex;
-      z-index: 30;
-    }
-
-    .nav-btn {
-      flex: 1;
-      padding: 14px 8px 18px;
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      transition: color 0.2s;
-    }
-
-    .nav-btn .nav-icon { font-size: 1.2rem; }
-    .nav-btn.active { color: var(--accent); }
-
-    .page { display: none; }
-    .page.active { display: block; }
-
-    .view-tabs {
-      display: flex;
-      padding: 12px 24px 0;
-      gap: 8px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      border-radius: 8px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      background: var(--accent);
-      color: var(--bg);
-      border-color: var(--accent);
-      font-weight: 500;
-    }
-
-    .add-area { padding: 12px 24px 0; }
-
-    .input-row { display: flex; gap: 8px; }
-
-    input[type="text"], select {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 13px 16px;
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      font-size: 0.85rem;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-
-    input[type="text"]:focus, select:focus { border-color: var(--accent); }
-    input[type="text"]::placeholder { color: var(--muted); }
-
-    select {
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-      cursor: pointer;
-      font-size: 0.78rem;
-      padding: 11px 36px 11px 14px;
-    }
-
-    select option { background: #1c1c1c; }
-
-    .task-add-selects { margin-top: 8px; }
-
-    .btn-add {
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 12px;
-      width: 50px;
-      font-size: 1.5rem;
-      cursor: pointer;
-      font-weight: 700;
-      transition: transform 0.15s, opacity 0.15s;
-      flex-shrink: 0;
-    }
-
-    .btn-add:active { transform: scale(0.93); opacity: 0.8; }
-
-    .progress-wrap { padding: 12px 24px 0; }
-
-    .progress-bar {
-      height: 4px;
-      background: var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 999px;
-      transition: width 0.4s ease;
-    }
-
-    .progress-label {
-      font-size: 0.65rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .section-head {
-      padding: 14px 24px 8px;
-      font-size: 0.65rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-
-    .task-list {
-      padding: 0 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .project-group { margin-bottom: 4px; }
-
-    .project-group-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 0 8px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .project-color-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .project-group-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 700;
-      flex: 1;
-    }
-
-    .project-group-count { font-size: 0.65rem; color: var(--muted); }
-
-    .project-group-chevron {
-      font-size: 0.7rem;
-      color: var(--muted);
-      transition: transform 0.2s;
-    }
-
-    .project-group.collapsed .project-group-chevron { transform: rotate(-90deg); }
-    .project-group.collapsed .project-tasks { display: none; }
-
-    .project-tasks {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      padding-left: 20px;
-    }
-
-    .task-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: slideIn 0.25s ease;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .task-item.done { opacity: 0.4; }
-    .task-item.done .task-text { text-decoration: line-through; color: var(--muted); }
-
-    .check-btn {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background: transparent;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      transition: all 0.2s;
-      color: transparent;
-    }
-
-    .task-item.done .check-btn {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: var(--bg);
-    }
-
-    .task-body { flex: 1; min-width: 0; }
-
-    .task-text {
-      font-size: 0.82rem;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-
-    .task-meta {
-      font-size: 0.62rem;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    .delete-btn {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.9rem;
-      padding: 4px;
-      border-radius: 6px;
-      transition: color 0.15s;
-      flex-shrink: 0;
-    }
-
-    .delete-btn:active { color: var(--danger); }
-
-    .empty {
-      text-align: center;
-      padding: 50px 24px;
-      color: var(--muted);
-    }
-
-    .empty-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
-    .empty-text { font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase; }
-
-    /* Projects page */
-    .projects-header {
-      padding: 16px 24px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .projects-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .btn-new-project {
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      cursor: pointer;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      transition: opacity 0.15s;
-    }
-
-    .btn-new-project:active { opacity: 0.75; }
-
-    .project-cards {
-      padding: 0 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .project-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px;
-      animation: slideIn 0.25s ease;
-    }
-
-    .project-card-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .project-card-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-
-    .project-card-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      flex: 1;
-    }
-
-    .project-card-delete {
-      background: transparent;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 2px 6px;
-      border-radius: 6px;
-      transition: color 0.15s;
-    }
-
-    .project-card-delete:active { color: var(--danger); }
-
-    .project-card-bar {
-      height: 3px;
-      background: var(--border);
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .project-card-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.4s ease;
-    }
-
-    .project-card-stats {
-      display: flex;
-      gap: 14px;
-      font-size: 0.65rem;
-      color: var(--muted);
-    }
-
-    /* Modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 50;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 24px 24px 0 0;
-      padding: 28px 24px;
-      width: 100%;
-      max-width: 480px;
-      animation: slideUp 0.3s ease;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
-    }
-
-    .modal-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.2rem;
-      font-weight: 800;
-      margin-bottom: 20px;
-    }
-
-    .modal-field { margin-bottom: 14px; }
-
-    .modal-label {
-      font-size: 0.65rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    .color-picker { display: flex; gap: 10px; flex-wrap: wrap; }
-
-    .color-swatch {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 3px solid transparent;
-      transition: border-color 0.15s, transform 0.15s;
-    }
-
-    .color-swatch.selected { border-color: white; transform: scale(1.15); }
-
-    .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
-
-    .btn-cancel {
-      flex: 1;
-      padding: 13px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 12px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .btn-confirm {
-      flex: 2;
-      padding: 13px;
-      background: var(--accent);
-      border: none;
-      color: var(--bg);
-      border-radius: 12px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-
-    .btn-confirm:active { opacity: 0.8; }
-
-    #install-banner {
-      display: none;
-      position: fixed;
-      bottom: 72px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent);
-      color: var(--bg);
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-size: 0.8rem;
-      font-family: 'DM Mono', monospace;
-      cursor: pointer;
-      z-index: 40;
-      white-space: nowrap;
-      box-shadow: 0 8px 32px rgba(200,245,58,0.3);
-    }
+    #root { min-height: 100vh; }
+    button { font-family: inherit; }
+    input { font-family: inherit; }
   </style>
 </head>
 <body>
+  <div id="root"></div>
 
-<header>
-  <div class="header-top">
-    <div class="logo">Do<span>It</span></div>
-    <div class="date-badge" id="date-display"></div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
-    <div class="stat"><div class="stat-num" id="stat-done">0</div><div class="stat-label">Done</div></div>
-    <div class="stat"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">Streak 🔥</div></div>
-  </div>
-</header>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
 
-<!-- Tasks Page -->
-<div class="page active" id="page-tasks">
-  <div class="view-tabs">
-    <button class="tab active" onclick="setView('todo')">To-Do</button>
-    <button class="tab" onclick="setView('done')">Done</button>
-    <button class="tab" onclick="setView('all')">All</button>
-  </div>
+  <script type="text/babel" data-presets="react" data-type="module">
+    const { useState, useEffect } = React;
 
-  <div class="add-area">
-    <div class="input-row">
-      <input type="text" id="task-input" placeholder="Add a task..." maxlength="120" />
-      <button class="btn-add" onclick="addTask()">+</button>
-    </div>
-    <div class="task-add-selects">
-      <select id="task-project-select">
-        <option value="">📥 No Project (Inbox)</option>
-      </select>
-    </div>
-  </div>
+    const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  <div class="progress-wrap">
-    <div class="progress-label">
-      <span>Overall progress</span>
-      <span id="progress-pct">0%</span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  </div>
-
-  <div class="section-head" id="list-label">TASKS</div>
-  <div class="task-list" id="task-list"></div>
-</div>
-
-<!-- Projects Page -->
-<div class="page" id="page-projects">
-  <div class="projects-header">
-    <div class="projects-title">Projects</div>
-    <button class="btn-new-project" onclick="openNewProjectModal()">+ New Project</button>
-  </div>
-  <div class="project-cards" id="project-cards"></div>
-</div>
-
-<!-- Bottom Nav -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" onclick="showPage('tasks')" id="nav-tasks">
-    <span class="nav-icon">✓</span>Tasks
-  </button>
-  <button class="nav-btn" onclick="showPage('projects')" id="nav-projects">
-    <span class="nav-icon">◫</span>Projects
-  </button>
-</nav>
-
-<!-- New Project Modal -->
-<div class="modal-overlay" id="project-modal">
-  <div class="modal">
-    <div class="modal-title">New Project</div>
-    <div class="modal-field">
-      <div class="modal-label">Name</div>
-      <input type="text" id="project-name-input" placeholder="e.g. Work, Side Project, Fitness..." maxlength="40" />
-    </div>
-    <div class="modal-field">
-      <div class="modal-label">Color</div>
-      <div class="color-picker" id="color-picker"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeProjectModal()">Cancel</button>
-      <button class="btn-confirm" onclick="saveProject()">Create Project</button>
-    </div>
-  </div>
-</div>
-
-<div id="install-banner">📲 Add to Home Screen</div>
-
-<script>
-  const PROJECT_COLORS = [
-    '#c8f53a','#ff6b6b','#4ecdc4','#45b7d1','#f7b731',
-    '#a29bfe','#fd79a8','#00b894','#e17055','#74b9ff'
-  ];
-
-  let state = JSON.parse(localStorage.getItem('doit_v2') || 'null') || {
-    tasks: [], projects: [], streak: 0, lastDate: null, collapsed: []
-  };
-
-  let activeView = 'todo';
-  let selectedColor = PROJECT_COLORS[0];
-  let currentPage = 'tasks';
-
-  function save() { localStorage.setItem('doit_v2', JSON.stringify(state)); }
-
-  // ── Navigation ─────────────────────────────────────────
-  function showPage(page) {
-    currentPage = page;
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('nav-' + page).classList.add('active');
-    render();
-  }
-
-  // ── Project Modal ──────────────────────────────────────
-  function openNewProjectModal() {
-    document.getElementById('project-name-input').value = '';
-    selectedColor = PROJECT_COLORS[0];
-    renderColorPicker();
-    document.getElementById('project-modal').classList.add('open');
-    setTimeout(() => document.getElementById('project-name-input').focus(), 300);
-  }
-
-  function closeProjectModal() {
-    document.getElementById('project-modal').classList.remove('open');
-  }
-
-  function renderColorPicker() {
-    document.getElementById('color-picker').innerHTML = PROJECT_COLORS.map(c =>
-      `<div class="color-swatch ${c === selectedColor ? 'selected' : ''}"
-            style="background:${c}" onclick="selectColor('${c}')"></div>`
-    ).join('');
-  }
-
-  function selectColor(c) { selectedColor = c; renderColorPicker(); }
-
-  function saveProject() {
-    const name = document.getElementById('project-name-input').value.trim();
-    if (!name) return;
-    state.projects.push({ id: Date.now(), name, color: selectedColor });
-    save();
-    closeProjectModal();
-    render();
-  }
-
-  function deleteProject(id) {
-    if (!confirm('Delete this project? Tasks will move to Inbox.')) return;
-    state.projects = state.projects.filter(p => p.id !== id);
-    state.tasks.forEach(t => { if (t.projectId === id) t.projectId = null; });
-    save();
-    render();
-  }
-
-  // ── Tasks ──────────────────────────────────────────────
-  function addTask() {
-    const input = document.getElementById('task-input');
-    const text = input.value.trim();
-    if (!text) return;
-    const raw = document.getElementById('task-project-select').value;
-    const projectId = raw ? parseInt(raw) : null;
-    state.tasks.unshift({ id: Date.now(), text, done: false, projectId, createdAt: new Date().toISOString(), doneAt: null });
-    save();
-    input.value = '';
-    render();
-  }
-
-  function toggleTask(id) {
-    const t = state.tasks.find(t => t.id === id);
-    if (!t) return;
-    t.done = !t.done;
-    t.doneAt = t.done ? new Date().toISOString() : null;
-    save();
-    updateStreak();
-    render();
-  }
-
-  function deleteTask(id) {
-    state.tasks = state.tasks.filter(t => t.id !== id);
-    save();
-    render();
-  }
-
-  function updateStreak() {
-    const today = new Date().toDateString();
-    const doneToday = state.tasks.some(t => t.done && t.doneAt && new Date(t.doneAt).toDateString() === today);
-    if (doneToday && state.lastDate !== today) {
-      state.streak += 1;
-      state.lastDate = today;
-      save();
-    }
-  }
-
-  function setView(v) {
-    activeView = v;
-    document.querySelectorAll('.tab').forEach((el, i) => {
-      el.classList.toggle('active', ['todo','done','all'][i] === v);
-    });
-    render();
-  }
-
-  function toggleCollapse(key) {
-    const k = String(key);
-    const idx = state.collapsed.indexOf(k);
-    if (idx === -1) state.collapsed.push(k);
-    else state.collapsed.splice(idx, 1);
-    save();
-    render();
-  }
-
-  // ── Render ─────────────────────────────────────────────
-  function render() {
-    document.getElementById('date-display').textContent =
-      new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-
-    const allTasks = state.tasks;
-    const doneTasks = allTasks.filter(t => t.done);
-    document.getElementById('stat-total').textContent = allTasks.length;
-    document.getElementById('stat-done').textContent = doneTasks.length;
-    document.getElementById('stat-streak').textContent = state.streak;
-
-    const pct = allTasks.length ? Math.round((doneTasks.length / allTasks.length) * 100) : 0;
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-pct').textContent = pct + '%';
-
-    // Sync project dropdown
-    const sel = document.getElementById('task-project-select');
-    const prev = sel.value;
-    sel.innerHTML = '<option value="">📥 No Project (Inbox)</option>' +
-      state.projects.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('');
-    if (prev) sel.value = prev;
-
-    if (currentPage === 'tasks') renderTasksPage();
-    if (currentPage === 'projects') renderProjectsPage();
-  }
-
-  function renderTasksPage() {
-    let tasks = [...state.tasks];
-    if (activeView === 'todo') tasks = tasks.filter(t => !t.done);
-    if (activeView === 'done') tasks = tasks.filter(t => t.done);
-
-    document.getElementById('list-label').textContent =
-      tasks.length + (activeView === 'done' ? ' completed' : activeView === 'todo' ? ' remaining' : ' tasks');
-
-    const listEl = document.getElementById('task-list');
-
-    if (!tasks.length) {
-      listEl.innerHTML = `<div class="empty">
-        <span class="empty-icon">${activeView === 'done' ? '🎯' : '✨'}</span>
-        <div class="empty-text">${activeView === 'done' ? 'Nothing done yet' : 'All clear!'}</div>
-      </div>`;
-      return;
+    function getMonday(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = (day === 0 ? -6 : 1 - day);
+      d.setDate(d.getDate() + diff);
+      d.setHours(0,0,0,0);
+      return d;
     }
 
-    // Build groups: inbox first, then each project
-    const groups = [{ key: '__none__', label: 'Inbox', color: '#444', tasks: [] }];
-    state.projects.forEach(p => groups.push({ key: String(p.id), label: p.name, color: p.color, tasks: [] }));
-
-    const groupMap = {};
-    groups.forEach(g => { groupMap[g.key] = g; });
-
-    tasks.forEach(t => {
-      const key = t.projectId && groupMap[String(t.projectId)] ? String(t.projectId) : '__none__';
-      groupMap[key].tasks.push(t);
-    });
-
-    let html = '';
-    groups.forEach(g => {
-      if (!g.tasks.length) return;
-      const isCollapsed = state.collapsed.includes(g.key);
-      const done = g.tasks.filter(t => t.done).length;
-      html += `<div class="project-group ${isCollapsed ? 'collapsed' : ''}">
-        <div class="project-group-header" onclick="toggleCollapse('${g.key}')">
-          <div class="project-color-dot" style="background:${g.color}"></div>
-          <div class="project-group-name">${escHtml(g.label)}</div>
-          <div class="project-group-count">${done}/${g.tasks.length}</div>
-          <div class="project-group-chevron">▾</div>
-        </div>
-        <div class="project-tasks">
-          ${g.tasks.map(t => `
-            <div class="task-item ${t.done ? 'done' : ''}">
-              <button class="check-btn" onclick="toggleTask(${t.id})">✓</button>
-              <div class="task-body">
-                <div class="task-text">${escHtml(t.text)}</div>
-                <div class="task-meta">${timeAgo(t.createdAt)}</div>
-              </div>
-              <button class="delete-btn" onclick="deleteTask(${t.id})">✕</button>
-            </div>`).join('')}
-        </div>
-      </div>`;
-    });
-
-    listEl.innerHTML = html;
-  }
-
-  function renderProjectsPage() {
-    const el = document.getElementById('project-cards');
-    if (!state.projects.length) {
-      el.innerHTML = `<div class="empty">
-        <span class="empty-icon">◫</span>
-        <div class="empty-text">No projects yet — create one!</div>
-      </div>`;
-      return;
+    function weekKey(monday) {
+      return monday.toISOString().slice(0,10);
     }
 
-    el.innerHTML = state.projects.map(p => {
-      const pt = state.tasks.filter(t => t.projectId === p.id);
-      const done = pt.filter(t => t.done).length;
-      const total = pt.length;
-      const pct = total ? Math.round((done / total) * 100) : 0;
-      return `<div class="project-card">
-        <div class="project-card-top">
-          <div class="project-card-dot" style="background:${p.color}"></div>
-          <div class="project-card-name">${escHtml(p.name)}</div>
-          <button class="project-card-delete" onclick="deleteProject(${p.id})">✕</button>
-        </div>
-        <div class="project-card-bar">
-          <div class="project-card-fill" style="width:${pct}%; background:${p.color}"></div>
-        </div>
-        <div class="project-card-stats">
-          <span>📋 ${total} tasks</span>
-          <span>✓ ${done} done</span>
-          <span>${pct}% complete</span>
-        </div>
-      </div>`;
-    }).join('');
-  }
+    function formatWeekLabel(monday) {
+      const end = new Date(monday);
+      end.setDate(end.getDate() + 6);
+      const fmt = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return `${fmt(monday)} – ${fmt(end)}`;
+    }
 
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+    const styles = {
+      wrap: { fontFamily: "var(--font-sans)", padding: "1.5rem 1rem", maxWidth: 640, margin: "0 auto" },
+      header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" },
+      h1: { fontSize: 20, fontWeight: 500, margin: 0, color: "var(--color-text-primary)" },
+      weekLabel: { fontSize: 13, color: "var(--color-text-secondary)" },
+      addRow: { display: "flex", gap: 8, marginBottom: "1.5rem" },
+      input: { flex: 1, padding: "8px 12px", fontSize: 14, borderRadius: 8, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none" },
+      numInput: { width: 60, padding: "8px 10px", fontSize: 14, borderRadius: 8, border: "0.5px solid var(--color-border-secondary)", background: "var(--color-background-primary)", color: "var(--color-text-primary)", outline: "none", textAlign: "center" },
+      btn: { padding: "8px 16px", fontSize: 14, borderRadius: 8, border: "0.5px solid var(--color-border-secondary)", background: "transparent", color: "var(--color-text-primary)", cursor: "pointer" },
+      card: { background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: 12, padding: "1rem 1.25rem", marginBottom: 12 },
+      cardTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+      taskName: { fontSize: 15, fontWeight: 500, color: "var(--color-text-primary)", margin: 0 },
+      target: { fontSize: 12, color: "var(--color-text-secondary)" },
+      daysRow: { display: "flex", gap: 6, marginBottom: 10 },
+      dayBtn: (checked, met) => ({
+        width: 36, height: 36, borderRadius: 8, border: checked ? "none" : "0.5px solid var(--color-border-tertiary)",
+        background: checked ? (met ? "#1D9E75" : "#378ADD") : "var(--color-background-secondary)",
+        color: checked ? "#fff" : "var(--color-text-secondary)",
+        fontSize: 12, fontWeight: checked ? 500 : 400, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+      }),
+      progressWrap: { height: 4, borderRadius: 4, background: "var(--color-background-secondary)", overflow: "hidden" },
+      progressBar: (pct, met) => ({ height: "100%", width: `${Math.min(100, pct)}%`, borderRadius: 4, background: met ? "#1D9E75" : "#378ADD", transition: "width 0.2s" }),
+      progressLabel: { fontSize: 11, color: "var(--color-text-secondary)", marginTop: 4 },
+      historySection: { marginTop: "2rem" },
+      historyH2: { fontSize: 14, fontWeight: 500, color: "var(--color-text-secondary)", marginBottom: 12 },
+      histRow: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "0.5px solid var(--color-border-tertiary)", fontSize: 13 },
+      dot: (met) => ({ width: 8, height: 8, borderRadius: "50%", background: met ? "#1D9E75" : "#888780", display: "inline-block", marginRight: 6 }),
+      deleteBtn: { background: "none", border: "none", color: "var(--color-text-tertiary)", cursor: "pointer", fontSize: 16, padding: "0 4px" },
+      empty: { fontSize: 14, color: "var(--color-text-secondary)", textAlign: "center", padding: "2rem 0" },
+    };
 
-  function timeAgo(iso) {
-    const d = (Date.now() - new Date(iso)) / 1000;
-    if (d < 60) return 'just now';
-    if (d < 3600) return Math.floor(d/60) + 'm ago';
-    if (d < 86400) return Math.floor(d/3600) + 'h ago';
-    return Math.floor(d/86400) + 'd ago';
-  }
+    function App() {
+      const today = new Date();
+      const currentMonday = getMonday(today);
+      const currentKey = weekKey(currentMonday);
 
-  document.getElementById('task-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTask(); });
-  document.getElementById('project-name-input').addEventListener('keydown', e => { if (e.key === 'Enter') saveProject(); });
-  document.getElementById('project-modal').addEventListener('click', function(e) { if (e.target === this) closeProjectModal(); });
-
-  let deferredPrompt;
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('install-banner').style.display = 'block';
-  });
-  document.getElementById('install-banner').addEventListener('click', () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => {
-        document.getElementById('install-banner').style.display = 'none';
-        deferredPrompt = null;
+      const [tasks, setTasks] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("wtt_tasks") || "[]"); } catch { return []; }
       });
+      const [checks, setChecks] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("wtt_checks") || "{}"); } catch { return {}; }
+      });
+      const [history, setHistory] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("wtt_history") || "[]"); } catch { return []; }
+      });
+
+      const [newName, setNewName] = useState("");
+      const [newTarget, setNewTarget] = useState(3);
+      const [viewingHistory, setViewingHistory] = useState(false);
+
+      useEffect(() => { localStorage.setItem("wtt_tasks", JSON.stringify(tasks)); }, [tasks]);
+      useEffect(() => { localStorage.setItem("wtt_checks", JSON.stringify(checks)); }, [checks]);
+      useEffect(() => { localStorage.setItem("wtt_history", JSON.stringify(history)); }, [history]);
+
+      function addTask() {
+        if (!newName.trim()) return;
+        setTasks(prev => [...prev, { id: Date.now(), name: newName.trim(), target: Math.max(1, Math.min(7, Number(newTarget))) }]);
+        setNewName("");
+        setNewTarget(3);
+      }
+
+      function deleteTask(id) {
+        setTasks(prev => prev.filter(t => t.id !== id));
+        setChecks(prev => {
+          const next = { ...prev };
+          Object.keys(next).forEach(k => { if (k.startsWith(id + "_")) delete next[k]; });
+          return next;
+        });
+      }
+
+      function toggleDay(taskId, dayIdx) {
+        const key = `${taskId}_${currentKey}_${dayIdx}`;
+        setChecks(prev => ({ ...prev, [key]: !prev[key] }));
+      }
+
+      function getDayChecks(taskId) {
+        return DAYS.map((_, i) => !!checks[`${taskId}_${currentKey}_${i}`]);
+      }
+
+      function getCount(taskId) {
+        return getDayChecks(taskId).filter(Boolean).length;
+      }
+
+      const pastWeeks = [...new Set(
+        Object.keys(checks).map(k => k.split("_")[1]).filter(w => w && w !== currentKey)
+      )].sort().reverse().slice(0, 8);
+
+      return (
+        <div style={styles.wrap}>
+          <div style={styles.header}>
+            <h1 style={styles.h1}>Weekly tasks</h1>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+              <span style={styles.weekLabel}>{formatWeekLabel(currentMonday)}</span>
+              <button style={{ ...styles.btn, fontSize: 12, padding: "4px 10px" }} onClick={() => setViewingHistory(v => !v)}>
+                {viewingHistory ? "Current week" : "History"}
+              </button>
+            </div>
+          </div>
+
+          {!viewingHistory ? (
+            <>
+              <div style={styles.addRow}>
+                <input style={styles.input} placeholder="New task name..." value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addTask()} />
+                <input style={styles.numInput} type="number" min={1} max={7} value={newTarget}
+                  onChange={e => setNewTarget(e.target.value)} title="Days per week" />
+                <button style={styles.btn} onClick={addTask}>Add</button>
+              </div>
+
+              {tasks.length === 0 && <p style={styles.empty}>No tasks yet. Add one above.</p>}
+
+              {tasks.map(task => {
+                const dayChecks = getDayChecks(task.id);
+                const count = dayChecks.filter(Boolean).length;
+                const met = count >= task.target;
+                return (
+                  <div key={task.id} style={styles.card}>
+                    <div style={styles.cardTop}>
+                      <div>
+                        <p style={styles.taskName}>{task.name}</p>
+                        <p style={styles.target}>{task.target} days/week</p>
+                      </div>
+                      <button style={styles.deleteBtn} onClick={() => deleteTask(task.id)} title="Remove task">×</button>
+                    </div>
+                    <div style={styles.daysRow}>
+                      {DAYS.map((d, i) => (
+                        <button key={d} style={styles.dayBtn(dayChecks[i], met)} onClick={() => toggleDay(task.id, i)}>
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={styles.progressWrap}>
+                      <div style={styles.progressBar((count / task.target) * 100, met)} />
+                    </div>
+                    <p style={styles.progressLabel}>{count} / {task.target} days {met ? "— done!" : ""}</p>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <div style={styles.historySection}>
+              <p style={styles.historyH2}>Past weeks</p>
+              {pastWeeks.length === 0 && <p style={styles.empty}>No history yet. Complete tasks this week to start tracking.</p>}
+              {pastWeeks.map(wk => {
+                const mon = new Date(wk + "T00:00:00");
+                return (
+                  <div key={wk}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-secondary)", margin: "1rem 0 4px" }}>{formatWeekLabel(mon)}</p>
+                    {tasks.map(task => {
+                      const count = DAYS.reduce((acc, _, i) => acc + (!!checks[`${task.id}_${wk}_${i}`] ? 1 : 0), 0);
+                      const met = count >= task.target;
+                      if (count === 0) return null;
+                      return (
+                        <div key={task.id} style={styles.histRow}>
+                          <span><span style={styles.dot(met)} />{task.name}</span>
+                          <span style={{ color: met ? "#1D9E75" : "var(--color-text-secondary)" }}>{count}/{task.target}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
     }
-  });
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
 
-  render();
-</script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  </script>
 </body>
 </html>
