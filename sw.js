@@ -1,4 +1,4 @@
-const CACHE = 'doit-v1';
+const CACHE = 'doit-v2';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {

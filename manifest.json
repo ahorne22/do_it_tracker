@@ -1,11 +1,11 @@
 {
-  "name": "DoIt - Task Tracker",
-  "short_name": "DoIt",
-  "description": "Track tasks and performance",
+  "name": "Weekly tasks",
+  "short_name": "Weekly tasks",
+  "description": "Track recurring weekly habits and tasks",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#fafaf7",
+  "theme_color": "#fafaf7",
   "orientation": "portrait",
   "icons": [
     {
