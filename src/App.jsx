@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, provider, db } from "./firebase";
+import MeditationTab from "./MeditationTab";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -27,9 +28,21 @@ function formatWeekLabel(monday) {
 
 const s = {
   wrap: { fontFamily: "sans-serif", padding: "1.5rem 1rem", maxWidth: 640, margin: "0 auto" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" },
   h1: { fontSize: 20, fontWeight: 500, margin: 0 },
   weekLabel: { fontSize: 13, color: "#888" },
+  tabBar: { display: "flex", borderBottom: "2px solid #f0f0f0", marginBottom: "1.5rem" },
+  tab: (active) => ({
+    padding: "8px 20px",
+    fontSize: 14,
+    fontWeight: active ? 600 : 400,
+    color: active ? "#1D9E75" : "#888",
+    background: "none",
+    border: "none",
+    borderBottom: active ? "2px solid #1D9E75" : "2px solid transparent",
+    marginBottom: -2,
+    cursor: "pointer",
+  }),
   addRow: { display: "flex", gap: 8, marginBottom: "1.5rem" },
   input: { flex: 1, padding: "8px 12px", fontSize: 14, borderRadius: 8, border: "1px solid #ddd", outline: "none" },
   numInput: { width: 60, padding: "8px 10px", fontSize: 14, borderRadius: 8, border: "1px solid #ddd", outline: "none", textAlign: "center" },
@@ -59,6 +72,7 @@ const s = {
   loginBtn: { padding: "12px 24px", fontSize: 15, borderRadius: 8, border: "1px solid #ddd", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.1)" },
   avatar: { width: 28, height: 28, borderRadius: "50%", objectFit: "cover" },
   userRow: { display: "flex", alignItems: "center", gap: 8 },
+  tasksMeta: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" },
 };
 
 export default function App() {
@@ -68,13 +82,14 @@ export default function App() {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("tasks");
   const [tasks, setTasks] = useState([]);
   const [checks, setChecks] = useState({});
+  const [meditationChecks, setMeditationChecks] = useState({});
   const [newName, setNewName] = useState("");
   const [newTarget, setNewTarget] = useState(3);
   const [viewingHistory, setViewingHistory] = useState(false);
 
-  // Auth listener
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async u => {
       setUser(u);
@@ -84,10 +99,9 @@ export default function App() {
     return unsub;
   }, []);
 
-  // Save to Firestore whenever tasks or checks change
   useEffect(() => {
     if (user) saveData(user.uid);
-  }, [tasks, checks]);
+  }, [tasks, checks, meditationChecks]);
 
   async function loadData(uid) {
     const ref = doc(db, "users", uid);
@@ -96,12 +110,13 @@ export default function App() {
       const data = snap.data();
       setTasks(data.tasks || []);
       setChecks(data.checks || {});
+      setMeditationChecks(data.meditationChecks || {});
     }
   }
 
   async function saveData(uid) {
     const ref = doc(db, "users", uid);
-    await setDoc(ref, { tasks, checks }, { merge: true });
+    await setDoc(ref, { tasks, checks, meditationChecks }, { merge: true });
   }
 
   async function login() {
@@ -112,6 +127,7 @@ export default function App() {
     await signOut(auth);
     setTasks([]);
     setChecks({});
+    setMeditationChecks({});
   }
 
   function addTask() {
@@ -135,6 +151,11 @@ export default function App() {
     setChecks(prev => ({ ...prev, [key]: !prev[key] }));
   }
 
+  function toggleMeditationDay(exerciseId, dayIdx) {
+    const key = `${exerciseId}_${currentKey}_${dayIdx}`;
+    setMeditationChecks(prev => ({ ...prev, [key]: !prev[key] }));
+  }
+
   function getDayChecks(taskId) {
     return DAYS.map((_, i) => !!checks[`${taskId}_${currentKey}_${i}`]);
   }
@@ -143,7 +164,7 @@ export default function App() {
     Object.keys(checks).map(k => k.split("_")[1]).filter(w => w && w !== currentKey)
   )].sort().reverse().slice(0, 8);
 
-  if (loading) return <div style={{ ...s.loginWrap }}><p style={{ color: "#aaa" }}>Loading...</p></div>;
+  if (loading) return <div style={s.loginWrap}><p style={{ color: "#aaa" }}>Loading...</p></div>;
 
   if (!user) return (
     <div style={s.loginWrap}>
@@ -159,84 +180,100 @@ export default function App() {
   return (
     <div style={s.wrap}>
       <div style={s.header}>
-        <h1 style={s.h1}>Weekly tasks</h1>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-          <div style={s.userRow}>
-            {user.photoURL && <img src={user.photoURL} alt="avatar" style={s.avatar} />}
-            <button style={{ ...s.btn, fontSize: 12, padding: "4px 10px" }} onClick={logout}>Sign out</button>
-          </div>
-          <span style={s.weekLabel}>{formatWeekLabel(currentMonday)}</span>
-          <button style={{ ...s.btn, fontSize: 12, padding: "4px 10px" }} onClick={() => setViewingHistory(v => !v)}>
-            {viewingHistory ? "Current week" : "History"}
-          </button>
+        <h1 style={s.h1}>Do It Tracker</h1>
+        <div style={s.userRow}>
+          {user.photoURL && <img src={user.photoURL} alt="avatar" style={s.avatar} />}
+          <button style={{ ...s.btn, fontSize: 12, padding: "4px 10px" }} onClick={logout}>Sign out</button>
         </div>
       </div>
 
-      {!viewingHistory ? (
+      <div style={s.tabBar}>
+        <button style={s.tab(activeTab === "tasks")} onClick={() => setActiveTab("tasks")}>Weekly Tasks</button>
+        <button style={s.tab(activeTab === "meditation")} onClick={() => setActiveTab("meditation")}>Meditation</button>
+      </div>
+
+      {activeTab === "tasks" ? (
         <>
-          <div style={s.addRow}>
-            <input style={s.input} placeholder="New task name..." value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && addTask()} />
-            <input style={s.numInput} type="number" min={1} max={7} value={newTarget}
-              onChange={e => setNewTarget(e.target.value)} title="Days per week" />
-            <button style={s.btn} onClick={addTask}>Add</button>
+          <div style={s.tasksMeta}>
+            <span style={s.weekLabel}>{formatWeekLabel(currentMonday)}</span>
+            <button style={{ ...s.btn, fontSize: 12, padding: "4px 10px" }} onClick={() => setViewingHistory(v => !v)}>
+              {viewingHistory ? "Current week" : "History"}
+            </button>
           </div>
 
-          {tasks.length === 0 && <p style={s.empty}>No tasks yet. Add one above.</p>}
-
-          {tasks.map(task => {
-            const dayChecks = getDayChecks(task.id);
-            const count = dayChecks.filter(Boolean).length;
-            const met = count >= task.target;
-            return (
-              <div key={task.id} style={s.card}>
-                <div style={s.cardTop}>
-                  <div>
-                    <p style={s.taskName}>{task.name}</p>
-                    <p style={s.target}>{task.target} days/week</p>
-                  </div>
-                  <button style={s.deleteBtn} onClick={() => deleteTask(task.id)}>×</button>
-                </div>
-                <div style={s.daysRow}>
-                  {DAYS.map((d, i) => (
-                    <button key={d} style={s.dayBtn(dayChecks[i], met)} onClick={() => toggleDay(task.id, i)}>
-                      {d}
-                    </button>
-                  ))}
-                </div>
-                <div style={s.progressWrap}>
-                  <div style={s.progressBar((count / task.target) * 100, met)} />
-                </div>
-                <p style={s.progressLabel}>{count} / {task.target} days {met ? "— done!" : ""}</p>
+          {!viewingHistory ? (
+            <>
+              <div style={s.addRow}>
+                <input style={s.input} placeholder="New task name..." value={newName}
+                  onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addTask()} />
+                <input style={s.numInput} type="number" min={1} max={7} value={newTarget}
+                  onChange={e => setNewTarget(e.target.value)} title="Days per week" />
+                <button style={s.btn} onClick={addTask}>Add</button>
               </div>
-            );
-          })}
+
+              {tasks.length === 0 && <p style={s.empty}>No tasks yet. Add one above.</p>}
+
+              {tasks.map(task => {
+                const dayChecks = getDayChecks(task.id);
+                const count = dayChecks.filter(Boolean).length;
+                const met = count >= task.target;
+                return (
+                  <div key={task.id} style={s.card}>
+                    <div style={s.cardTop}>
+                      <div>
+                        <p style={s.taskName}>{task.name}</p>
+                        <p style={s.target}>{task.target} days/week</p>
+                      </div>
+                      <button style={s.deleteBtn} onClick={() => deleteTask(task.id)}>×</button>
+                    </div>
+                    <div style={s.daysRow}>
+                      {DAYS.map((d, i) => (
+                        <button key={d} style={s.dayBtn(dayChecks[i], met)} onClick={() => toggleDay(task.id, i)}>
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={s.progressWrap}>
+                      <div style={s.progressBar((count / task.target) * 100, met)} />
+                    </div>
+                    <p style={s.progressLabel}>{count} / {task.target} days {met ? "— done!" : ""}</p>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <div>
+              <p style={s.historyH2}>Past weeks</p>
+              {pastWeeks.length === 0 && <p style={s.empty}>No history yet.</p>}
+              {pastWeeks.map(wk => {
+                const mon = new Date(wk + "T00:00:00");
+                return (
+                  <div key={wk}>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: "#aaa", margin: "1rem 0 4px" }}>{formatWeekLabel(mon)}</p>
+                    {tasks.map(task => {
+                      const count = DAYS.reduce((acc, _, i) => acc + (!!checks[`${task.id}_${wk}_${i}`] ? 1 : 0), 0);
+                      const met = count >= task.target;
+                      if (count === 0) return null;
+                      return (
+                        <div key={task.id} style={s.histRow}>
+                          <span><span style={s.dot(met)} />{task.name}</span>
+                          <span style={{ color: met ? "#1D9E75" : "#aaa" }}>{count}/{task.target}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
       ) : (
-        <div>
-          <p style={s.historyH2}>Past weeks</p>
-          {pastWeeks.length === 0 && <p style={s.empty}>No history yet.</p>}
-          {pastWeeks.map(wk => {
-            const mon = new Date(wk + "T00:00:00");
-            return (
-              <div key={wk}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: "#aaa", margin: "1rem 0 4px" }}>{formatWeekLabel(mon)}</p>
-                {tasks.map(task => {
-                  const count = DAYS.reduce((acc, _, i) => acc + (!!checks[`${task.id}_${wk}_${i}`] ? 1 : 0), 0);
-                  const met = count >= task.target;
-                  if (count === 0) return null;
-                  return (
-                    <div key={task.id} style={s.histRow}>
-                      <span><span style={s.dot(met)} />{task.name}</span>
-                      <span style={{ color: met ? "#1D9E75" : "#aaa" }}>{count}/{task.target}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+        <MeditationTab
+          checks={meditationChecks}
+          onToggle={toggleMeditationDay}
+          weekKey={currentKey}
+        />
       )}
     </div>
   );
